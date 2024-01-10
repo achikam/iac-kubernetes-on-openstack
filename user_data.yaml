@@ -5,3 +5,5 @@ chpasswd:
     root:root
     ubuntu:ubuntu
   expire: False
+runcmd: 
+  - [ ssh-keygen, -f, "/home/achikam/.ssh/known_hosts", -R, "125.213.130.186" ]

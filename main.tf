@@ -7,8 +7,8 @@ locals {
 
 resource "openstack_compute_flavor_v2" "tf_flavor1" {
   name      = "tf-flavor"
-  ram       = "1024"
-  vcpus     = "1"
+  ram       = "4096"
+  vcpus     = "2"
   disk      = "0"
   is_public = true
   extra_specs = {
@@ -113,13 +113,12 @@ resource "null_resource" "example" {
   connection {
     type     = "ssh"
     user     = "ubuntu"
-    # password = "ubuntu"
     private_key = file("~/.ssh/id_rsa")
     # host     = openstack_networking_floatingip_v2.tf-fip1["each.value.floatingip"]
     host     = openstack_networking_floatingip_v2.tf-fip1[each.key].address
   }
   provisioner "remote-exec" {
-    script  = "script/tes.sh"
+    script  = "script/kube.sh"
     on_failure = continue
   }
 }
