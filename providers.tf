@@ -12,7 +12,7 @@ terraform {
 provider "openstack" {
   user_name   = var.username
   tenant_name = var.project
-  domain_name = var.doamin
+  domain_name = var.domain
   password    = var.password
   auth_url    = "https://lite-iaas-tbs.lintasarta.net:13000"
   region      = "regionOne"

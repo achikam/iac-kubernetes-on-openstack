@@ -7,6 +7,10 @@ variable "password" {
 variable "project" {
   default = "uat-project"
 }
-variable "doamin" {
+variable "domain" {
   default = "uat"
+}
+variable "private_key_path" {
+  type = string
+  default = "/home/achikam/.ssh/id_rsa"
 }
