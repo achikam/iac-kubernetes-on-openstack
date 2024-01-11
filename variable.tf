@@ -1,16 +1,16 @@
 variable "username" {
-  default = "admin-uat"
+  default = "XXXXXXXXXXX"
 }
 variable "password" {
-  default = "Redhat123!@#"
+  default = "XXXXXXXXXX"
 }
 variable "project" {
-  default = "uat-project"
+  default = "XXXXXXXXXX"
 }
 variable "domain" {
-  default = "uat"
+  default = "XXXXXXXXXX"
 }
 variable "private_key_path" {
   type = string
-  default = "/home/achikam/.ssh/id_rsa"
+  default = "~/.ssh/id_rsa"
 }
