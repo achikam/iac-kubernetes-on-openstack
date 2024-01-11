@@ -1,5 +1,4 @@
 #!/bin/bash
-# echo "TESTING" > /tmp/TERRAFORM.txt
 
 VIP=10.20.20.10
 cat << EOF | tee ~/kubeadm-config.yaml
@@ -26,10 +25,8 @@ kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
 echo 'alias k=kubectl' >> ~/.bashrc
 echo 'complete -o default -F __start_kubectl k' >> ~/.bashrc
 
-grep -A2 "kubeadm join" kubeadm-init.out | sed -n '1,3p' > kubeadm-join-master.sh
-grep -A2 "kubeadm join" kubeadm-init.out | sed -n '5,6p' > kubeadm-join-worker.sh
+grep -A2 "kubeadm join" kubeadm-init.out | sed -n '1,3p' > join-master.sh
+grep -A2 "kubeadm join" kubeadm-init.out | sed -n '5,6p' > join-worker.sh
 
-# grep -A2 "kubeadm join" terraform_apply.log | cut -d':' -f2- | sed -n '1,3p'
-# grep -A2 "kubeadm join" terraform_apply.log | cut -d':' -f2- | sed -n '5,6p'
 
 

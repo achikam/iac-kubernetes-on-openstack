@@ -1,16 +1,16 @@
 locals {
   masters = {
-    "serverA" = { privateip = "10.20.20.11", floatingip = "125.213.130.182", volume= "vol_serverA" },
-    # "serverB" = { privateip = "10.20.20.12", floatingip = "125.213.130.183", volume= "vol_serverB" },
-    # "serverC" = { privateip = "10.20.20.13", floatingip = "125.213.130.184", volume= "vol_serverC" },
+    "master" = { privateip = "10.20.20.11", floatingip = "125.213.130.182", volume_name = "vol_master", volume_size = "10" },
+    # "worker1" = { privateip = "10.20.20.12", floatingip = "125.213.130.183", volume_name = "vol_worker1", volume_size = "10" },
+    # "worker2" = { privateip = "10.20.20.13", floatingip = "125.213.130.184", volume_name = "vol_worker2", volume_size = "10" },
   }
 }
 
 locals {
   workers = {
-    # "serverA" = { privateip = "10.20.20.11", floatingip = "125.213.130.182", volume= "vol_serverA" },
-    "serverB" = { privateip = "10.20.20.12", floatingip = "125.213.130.183", volume= "vol_serverB" },
-    "serverC" = { privateip = "10.20.20.13", floatingip = "125.213.130.184", volume= "vol_serverC" },
+    # "master" = { privateip = "10.20.20.11", floatingip = "125.213.130.182", volume_name = "vol_master", volume_size = "10" },
+    "worker1" = { privateip = "10.20.20.12", floatingip = "125.213.130.183", volume_name = "vol_worker1", volume_size = "10" },
+    "worker2" = { privateip = "10.20.20.13", floatingip = "125.213.130.184", volume_name = "vol_worker2", volume_size = "10" },
   }
 }
 
@@ -27,15 +27,15 @@ resource "openstack_compute_flavor_v2" "tf_flavor1" {
 
 resource "openstack_blockstorage_volume_v3" "m-vol" {
   for_each = local.masters
-  name = each.value.volume
-  size = 10
+  name = each.value.volume_name
+  size = each.value.volume_size
   image_id = "56383473-17de-4baf-8b9b-3711bebe5d3d"
 }
 
 resource "openstack_blockstorage_volume_v3" "w-vol" {
   for_each = local.workers
-  name = each.value.volume
-  size = 6
+  name = each.value.volume_name
+  size = each.value.volume_size
   image_id = "56383473-17de-4baf-8b9b-3711bebe5d3d"
 }
 
@@ -184,7 +184,7 @@ resource "openstack_compute_instance_v2" "master-vm" {
   name      = each.key
   flavor_id = openstack_compute_flavor_v2.tf_flavor1.id
   key_pair  = openstack_compute_keypair_v2.tf-keypair.name
-  security_groups = [openstack_compute_secgroup_v2.m-secgroup.name]
+  security_groups = [openstack_compute_secgroup_v2.w-secgroup.id]
   scheduler_hints {
     group = openstack_compute_servergroup_v2.tf-servergroup.id
   }
@@ -213,7 +213,7 @@ resource "openstack_compute_instance_v2" "worker-vm" {
   name      = each.key
   flavor_id = openstack_compute_flavor_v2.tf_flavor1.id
   key_pair  = openstack_compute_keypair_v2.tf-keypair.name
-  security_groups = [openstack_compute_secgroup_v2.w-secgroup.name]
+  security_groups = [openstack_compute_secgroup_v2.w-secgroup.id]
   scheduler_hints {
     group = openstack_compute_servergroup_v2.w-servergroup.id
   }
@@ -285,7 +285,7 @@ resource "null_resource" "kubeadm-bootstrap" {
     user     = "ubuntu"
     private_key = file(var.private_key_path)
     # private_key = file("/home/achikam/.ssh/terra-keypair")
-    host     = local.masters["serverA"].floatingip
+    host     = local.masters["master"].floatingip
     timeout  = "600s"
   }
   provisioner "remote-exec" {
@@ -304,7 +304,7 @@ resource "null_resource" "copy-private-key" {
     type     = "ssh"
     user     = "ubuntu"
     private_key = file(var.private_key_path)
-    host     = local.masters["serverA"].floatingip
+    host     = local.masters["master"].floatingip
     timeout  = "600s"
     }
   }
@@ -317,17 +317,12 @@ resource "null_resource" "copy-join-command" {
     type     = "ssh"
     user     = "ubuntu"
     private_key = file(var.private_key_path)
-    host     = local.masters["serverA"].floatingip
+    host     = local.masters["master"].floatingip
   }
   provisioner "remote-exec" {
-    inline = [
-      "sudo chmod 600 ~/.ssh/id_rsa",
-	    "scp -o StrictHostKeyChecking=no kubeadm-join-worker.sh ubuntu@${each.value.privateip}:/tmp/",
-	    "ssh -o StrictHostKeyChecking=no ubuntu@${each.value.privateip} 'sudo bash /tmp/kubeadm-join-worker.sh'",
-      ]
-    # script = "script/kubeadm-join=worker.sh"
-    # script = "script/install-cilium.sh"
-    }
+    script  = "script/kubeadm-join-worker.sh"
+    on_failure = continue
+  }
 }
 
 resource "null_resource" "kubeadm-complete" {
@@ -336,7 +331,7 @@ resource "null_resource" "kubeadm-complete" {
     type     = "ssh"
     user     = "ubuntu"
     private_key = file(var.private_key_path)
-    host     = local.masters["serverA"].floatingip
+    host     = local.masters["master"].floatingip
   }
   provisioner "remote-exec" {
     script  = "script/install-cilium.sh"
