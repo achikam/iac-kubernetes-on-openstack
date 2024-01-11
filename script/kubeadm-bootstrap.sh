@@ -15,6 +15,7 @@ EOF
 sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
 sudo cat /etc/crictl.yaml
 
+# sudo kubeadm init --skip-phases=addon/kube-proxy --config ~/kubeadm-config.yaml --upload-certs | tee kubeadm-init.out
 sudo kubeadm init --config ~/kubeadm-config.yaml --upload-certs | tee kubeadm-init.out
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -30,3 +31,5 @@ grep -A2 "kubeadm join" kubeadm-init.out | sed -n '5,6p' > kubeadm-join-worker.s
 
 # grep -A2 "kubeadm join" terraform_apply.log | cut -d':' -f2- | sed -n '1,3p'
 # grep -A2 "kubeadm join" terraform_apply.log | cut -d':' -f2- | sed -n '5,6p'
+
+

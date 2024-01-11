@@ -43,10 +43,6 @@ resource "openstack_compute_keypair_v2" "tf-keypair" {
   name = "terra-keypair"
   public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDGoFEgRQDiK3/jg7yptJ5TZi4WXlbvCa9w0cAUg4Mc4omomzXPF3XstpBC2xCSWRpsIhWusLr20p3M4tDkb87zxdmGZtJPljNn96KkX17lE0OJxHX4sMsCs1eHOsnhc5jcpnR43ATA/uOgVYEatDaIkaXgMQZeo4/+EYNcCoNMpk3CZAr8158iINWTRQFl+Ya814Bqa6+h3NEgiyN7R+dDdz7LFh2U05E9v4HodFpERx6waLfGjhdjXMVhZDLyDdulO+ETofQUG2uATz2Ocv8Cw7VEfG8QsJ8J0u2tdvCXVcqQ5gB7Xg34+/mn+j/bfLlDgu/C1VlqU05uELv50Cel ACC@ACC-MSI-LAPTOP"
 }
-# resource "local_file" "tf-private-key" {
-#   content = openstack_compute_keypair_v2.tf-keypair.private_key
-#   filename = "~/.ssh/terra-keypair"
-# }
 
 resource "openstack_compute_secgroup_v2" "m-secgroup" {
   name        = "m-secgroup"
@@ -206,12 +202,12 @@ resource "openstack_compute_instance_v2" "master-vm" {
   user_data = file("user_data.yaml")
 }
 
+# WORKER VM
 resource "openstack_compute_servergroup_v2" "w-servergroup" {
   name     = "w-servergroup"
   policies = ["anti-affinity"]
 }
 
-# WORKER VM
 resource "openstack_compute_instance_v2" "worker-vm" {
   for_each = local.workers
   name      = each.key
@@ -325,14 +321,29 @@ resource "null_resource" "copy-join-command" {
   }
   provisioner "remote-exec" {
     inline = [
-      "sudo chmod 600 /home/ubuntu/.ssh/id_rsa",
+      "sudo chmod 600 ~/.ssh/id_rsa",
 	    "scp -o StrictHostKeyChecking=no kubeadm-join-worker.sh ubuntu@${each.value.privateip}:/tmp/",
 	    "ssh -o StrictHostKeyChecking=no ubuntu@${each.value.privateip} 'sudo bash /tmp/kubeadm-join-worker.sh'",
-      
-    ]
-    # command = "scp -o StrictHostKeyChecking=no kubeadm-join-worker.sh ubuntu@${each.value.floatingip}:/tmp/"
+      ]
+    # script = "script/kubeadm-join=worker.sh"
+    # script = "script/install-cilium.sh"
+    }
+}
+
+resource "null_resource" "kubeadm-complete" {
+  depends_on = [ null_resource.copy-join-command ]
+  connection {
+    type     = "ssh"
+    user     = "ubuntu"
+    private_key = file(var.private_key_path)
+    host     = local.masters["serverA"].floatingip
+  }
+  provisioner "remote-exec" {
+    script  = "script/install-cilium.sh"
+    on_failure = continue
   }
 }
+
 
 output "floating_ip_Master" {
   value = { for fip in openstack_networking_floatingip_v2.m-fip: fip.id => fip.address }
