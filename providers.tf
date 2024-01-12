@@ -14,6 +14,6 @@ provider "openstack" {
   tenant_name = var.project
   domain_name = var.domain
   password    = var.password
-  auth_url    = "https://lite-iaas-tbs.lintasarta.net:13000"
+  auth_url    = "https://xxxxxxxxxxx:13000"
   region      = "regionOne"
 }
