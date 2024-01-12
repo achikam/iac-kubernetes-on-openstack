@@ -202,7 +202,6 @@ resource "openstack_compute_instance_v2" "master-vm" {
   name      = each.key
   flavor_id = openstack_compute_flavor_v2.tf_flavor1.id
   key_pair  = openstack_compute_keypair_v2.tf-keypair.name
-  # security_groups = [openstack_compute_secgroup_v2.master-secgroup.id]
   scheduler_hints {
     group = openstack_compute_servergroup_v2.master-servergroup.id
   }
@@ -232,7 +231,6 @@ resource "openstack_compute_instance_v2" "worker-vm" {
   name      = each.key
   flavor_id = openstack_compute_flavor_v2.tf_flavor1.id
   key_pair  = openstack_compute_keypair_v2.tf-keypair.name
-  # security_groups = [openstack_compute_secgroup_v2.worker-secgroup.id]
   scheduler_hints {
     group = openstack_compute_servergroup_v2.worker-servergroup.id
   }
