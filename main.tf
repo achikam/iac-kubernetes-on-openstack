@@ -355,6 +355,15 @@ resource "null_resource" "kubeadm-complete" {
   }
 }
 
+resource "null_resource" "remove-fip" {
+  depends_on = [ null_resource.kubeadm-complete, openstack_compute_floatingip_associate_v2.worker-fip ]
+  for_each = local.workers
+  provisioner "local-exec" {
+    command     = "terraform destroy -target=openstack_compute_floatingip_associate_v2.worker-fip[\\\"${each.key}\\\"] -auto-approve"
+    interpreter = ["/bin/bash", "-c"]
+  }
+}
+
 # output "floating_ip_Master" {
 #   value = { for fip in openstack_networking_floatingip_v2.master-fip: fip.id => fip.address }
 # }
