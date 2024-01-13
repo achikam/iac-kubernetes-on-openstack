@@ -356,7 +356,7 @@ resource "null_resource" "kubeadm-complete" {
 }
 
 resource "null_resource" "remove-fip" {
-  depends_on = [ null_resource.kubeadm-complete, openstack_compute_floatingip_associate_v2.worker-fip ]
+  depends_on = [ null_resource.for-master, null_resource.for-worker, null_resource.copy-private-key, null_resource.kubeadm-bootstrap, null_resource.copy-join-command, null_resource.kubeadm-complete, openstack_compute_floatingip_associate_v2.worker-fip ]
   for_each = local.workers
   provisioner "local-exec" {
     command     = "terraform destroy -target=openstack_compute_floatingip_associate_v2.worker-fip[\\\"${each.key}\\\"] -auto-approve"
